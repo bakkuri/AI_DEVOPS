@@ -133,3 +133,55 @@ npm run dev
 5. Resource data is sent to OpenAI API for cost analysis
 6. Analysis results are stored in Amazon RDS PostgreSQL
 7. Final report with cost breakdown, suggestions, and AWS CLI fix commands is displayed
+
+## Getting Started
+
+### Quick Setup (5 minutes)
+See **[QUICK_START.md](QUICK_START.md)** for fastest way to get running.
+
+### Complete Integration Guide
+See **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** for:
+- Full API endpoint documentation
+- Authentication flow details
+- WebSocket progress tracking
+- Error handling and troubleshooting
+- Production deployment recommendations
+
+### Testing Procedures
+See **[TESTING_GUIDE.md](TESTING_GUIDE.md)** for:
+- Step-by-step testing of all flows
+- Authentication tests
+- AWS integration verification
+- End-to-end analysis workflow
+- Error scenario handling
+- Performance tests
+
+### Integration Status
+See **[INTEGRATION_COMPLETE.md](INTEGRATION_COMPLETE.md)** for:
+- Complete overview of end-to-end integration
+- What has been implemented
+- Architecture flow
+- Security features
+- Performance characteristics
+
+## Environment Setup
+
+Create a `.env` file in the `backend/` folder:
+
+```bash
+# Required: OpenAI API Key
+# Get from: https://platform.openai.com/api-keys
+OPENAI_API_KEY=sk-your-key-here
+
+# Required: PostgreSQL Database URL
+# Format: postgresql://username:password@host:port/database
+DATABASE_URL=postgresql://postgres:password@localhost:5432/ai_cost_detective
+
+# Required: JWT Secret (generate your own)
+# Example: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+JWT_SECRET=your-secret-key-here
+
+# Optional: JWT Configuration
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_HOURS=24
+```
