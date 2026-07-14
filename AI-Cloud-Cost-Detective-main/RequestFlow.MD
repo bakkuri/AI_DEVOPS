@@ -1,17 +1,17 @@
 ## AI Cloud Cost Detective - Request Flow
 
 ```
-①  User ─·─·─► React ─·─·─► FastAPI Auth ─·─·─► JWT (Azure PostgreSQL)
+①  User ─·─·─► React ─·─·─► FastAPI Auth ─·─·─► JWT (AWS PostgreSQL)
 
 ②  User selects Resource Group ─·─·─► Python Backend
 
-③  Python ─·─·─► Azure CLI ─·─·─► Fetches all resources in RG
+③  Python ─·─·─► AWS CLI ─·─·─► Fetches all resources in RG
 
 ④  Python ─·─·─► FastAPI WebSocket ─·─·─► React (live progress)
 
 ⑤  Python ─·─·─► OpenAI API ─·─·─► Cost analysis
 
-⑥  Python ─·─·─► Azure PostgreSQL ─·─·─► Stores analysis history
+⑥  Python ─·─·─► AWS PostgreSQL ─·─·─► Stores analysis history
 
 ⑦  React ◄·─·─·─ Final report with suggestions & fixes
 ```

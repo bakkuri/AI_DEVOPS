@@ -21,7 +21,7 @@ Create the React frontend in a `frontend/` folder with custom JWT authentication
 ### Pages
 
 1. **Login / Signup** — Clean auth forms with email and password.
-2. **Dashboard** — Dropdown to select an Azure Resource Group (from `GET /api/resource-groups`), a "Run Analysis" button, and a progress section showing live status.
+2. **Dashboard** — Dropdown to select an AWS Resource Group (from `GET /api/resource-groups`), a "Run Analysis" button, and a progress section showing live status.
 3. **Analysis Report** — Displays the AI analysis: summary, issues with severity badges, estimated savings, and fix commands in copyable code blocks.
 4. **History** — Lists past analyses from `GET /api/history` with resource group name, date, issues found, and estimated savings. Clicking one opens the full report.
 

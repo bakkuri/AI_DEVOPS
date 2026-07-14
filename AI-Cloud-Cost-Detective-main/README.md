@@ -1,6 +1,6 @@
 # AI Cloud Cost Detective
 
-An AI-powered tool that investigates Azure cloud costs automatically. It scans resources in an Azure Resource Group, detects cost issues like over-provisioning and misconfigurations, and provides actionable suggestions with fixes.
+An AI-powered tool that investigates AWS cloud costs automatically. It scans resources in an AWS Resource Group, detects cost issues like over-provisioning and misconfigurations, and provides actionable suggestions with fixes.
 
 ## Tech Stack
 
@@ -9,10 +9,10 @@ An AI-powered tool that investigates Azure cloud costs automatically. It scans r
 | Frontend | React (Vite + TypeScript + Tailwind) |
 | Backend | Python (FastAPI) |
 | Auth | Custom JWT Auth (bcrypt + PyJWT) |
-| Cloud Data | Azure CLI |
-| Cloud | Azure |
+| Cloud Data | AWS CLI |
+| Cloud | AWS |
 | AI Analysis | OpenAI API |
-| Database | Azure Managed PostgreSQL |
+| Database | AWS Managed PostgreSQL |
 | Live Updates | FastAPI WebSocket |
 
 ## Architecture
@@ -40,7 +40,7 @@ An AI-powered tool that investigates Azure cloud costs automatically. It scans r
                 :                      :                  :
                 ▼                      ▼                  ▼
          ┌─────────────┐     ┌──────────────┐    ┌──────────────┐
-         │  AZURE CLI  │     │   FASTAPI    │    │   OPENAI     │
+         │  AWS CLI  │     │   FASTAPI    │    │   OPENAI     │
          │             │     │  WEBSOCKET   │    │    API       │
          │ az resource │     │  (Progress)  │    │              │
          │ list --rg   │     └──────┬───────┘    │ Cost Analysis│
@@ -48,13 +48,13 @@ An AI-powered tool that investigates Azure cloud costs automatically. It scans r
                 :                   : Live updates      :
                 ▼                   ▼                   :
          ┌─────────────┐   ┌───────────────┐            :
-         │   AZURE     │   │    REACT      │            :
+         │   AWS     │   │    REACT      │            :
          │ (Resource   │   │  (Progress    │            :
          │   Group)    │   │   Tracker)    │            :
          └─────────────┘   └───────────────┘            :
                                                         ▼
                                                  ┌──────────────┐
-                                                 │    AZURE     │
+                                                 │    AWS     │
                                                  │  POSTGRESQL  │
                                                  │  (Managed)   │
                                                  │              │
@@ -75,17 +75,17 @@ An AI-powered tool that investigates Azure cloud costs automatically. It scans r
 ## Request Flow
 
 ```
-①  User ─·─·─► React ─·─·─► FastAPI Auth ─·─·─► JWT (Azure PostgreSQL)
+①  User ─·─·─► React ─·─·─► FastAPI Auth ─·─·─► JWT (AWS PostgreSQL)
 
 ②  User selects Resource Group ─·─·─► Python Backend
 
-③  Python ─·─·─► Azure CLI ─·─·─► Fetches all resources in RG
+③  Python ─·─·─► AWS CLI ─·─·─► Fetches all resources in RG
 
 ④  Python ─·─·─► FastAPI WebSocket ─·─·─► React (live progress)
 
 ⑤  Python ─·─·─► OpenAI API ─·─·─► Cost analysis
 
-⑥  Python ─·─·─► Azure PostgreSQL ─·─·─► Stores analysis history
+⑥  Python ─·─·─► AWS PostgreSQL ─·─·─► Stores analysis history
 
 ⑦  React ◄·─·─·─ Final report with suggestions & fixes
 ```
@@ -99,9 +99,9 @@ An AI-powered tool that investigates Azure cloud costs automatically. It scans r
 
 ## Prerequisites
 
-- Azure CLI installed and logged in (`az login`)
-- An active Azure subscription with at least one resource group
-- An Azure Managed PostgreSQL instance
+- AWS CLI installed and logged in (`az login`)
+- An active AWS subscription with at least one resource group
+- An AWS Managed PostgreSQL instance
 - An OpenAI API key
 - Python 3.10+
 - Node.js 18+
@@ -127,10 +127,10 @@ npm run dev
 
 ## How It Works
 
-1. User signs up / logs in via custom JWT auth (credentials stored in Azure PostgreSQL)
-2. Selects an Azure Resource Group to analyze
-3. Python backend fetches all resources using Azure CLI
+1. User signs up / logs in via custom JWT auth (credentials stored in AWS PostgreSQL)
+2. Selects an AWS Resource Group to analyze
+3. Python backend fetches all resources using AWS CLI
 4. Live progress is streamed to the UI via FastAPI WebSocket
 5. Resource data is sent to OpenAI API for cost analysis
-6. Analysis results are stored in Azure PostgreSQL
+6. Analysis results are stored in AWS PostgreSQL
 7. Final report with cost breakdown, suggestions, and fix commands is displayed

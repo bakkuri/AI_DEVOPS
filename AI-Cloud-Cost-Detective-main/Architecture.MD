@@ -23,7 +23,7 @@
                 :                      :                  :
                 ▼                      ▼                  ▼
          ┌─────────────┐     ┌──────────────┐    ┌──────────────┐
-         │  AZURE CLI  │     │   FASTAPI    │    │   OPENAI     │
+         │  AWS CLI  │     │   FASTAPI    │    │   OPENAI     │
          │             │     │  WEBSOCKET   │    │    API       │
          │ az resource │     │  (Progress)  │    │              │
          │ list --rg   │     └──────┬───────┘    │ Cost Analysis│
@@ -31,13 +31,13 @@
                 :                   : Live updates      :
                 ▼                   ▼                   :
          ┌─────────────┐   ┌───────────────┐            :
-         │   AZURE     │   │    REACT      │            :
+         │   AWS     │   │    REACT      │            :
          │ (Resource   │   │  (Progress    │            :
          │   Group)    │   │   Tracker)    │            :
          └─────────────┘   └───────────────┘            :
                                                         ▼
                                                  ┌──────────────┐
-                                                 │    AZURE     │
+                                                 │    AWS     │
                                                  │  POSTGRESQL  │
                                                  │  (Managed)   │
                                                  │              │
