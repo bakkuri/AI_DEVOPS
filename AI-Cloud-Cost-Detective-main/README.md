@@ -12,7 +12,7 @@ An AI-powered tool that investigates AWS cloud costs automatically. It scans res
 | Cloud Data | AWS CLI |
 | Cloud | AWS |
 | AI Analysis | OpenAI API |
-| Database | AWS Managed PostgreSQL |
+| Database | Amazon RDS for PostgreSQL |
 | Live Updates | FastAPI WebSocket |
 
 ## Architecture
@@ -40,23 +40,22 @@ An AI-powered tool that investigates AWS cloud costs automatically. It scans res
                 :                      :                  :
                 ▼                      ▼                  ▼
          ┌─────────────┐     ┌──────────────┐    ┌──────────────┐
-         │  AWS CLI  │     │   FASTAPI    │    │   OPENAI     │
+         │  AWS CLI    │     │   FASTAPI    │    │   OPENAI     │
          │             │     │  WEBSOCKET   │    │    API       │
-         │ az resource │     │  (Progress)  │    │              │
-         │ list --rg   │     └──────┬───────┘    │ Cost Analysis│
+         │ resource-   │     │  (Progress)  │    │              │
+         │ groups list │     └──────┬───────┘    │ Cost Analysis│
          └──────┬──────┘            :            └──────┬───────┘
                 :                   : Live updates      :
                 ▼                   ▼                   :
          ┌─────────────┐   ┌───────────────┐            :
-         │   AWS     │   │    REACT      │            :
+         │    AWS      │   │    REACT      │            :
          │ (Resource   │   │  (Progress    │            :
          │   Group)    │   │   Tracker)    │            :
          └─────────────┘   └───────────────┘            :
                                                         ▼
                                                  ┌──────────────┐
-                                                 │    AWS     │
-                                                 │  POSTGRESQL  │
-                                                 │  (Managed)   │
+                                                 │  Amazon RDS  │
+                                                 │ (PostgreSQL) │
                                                  │              │
                                                  │ · users      │
                                                  │ · analyses   │
@@ -75,33 +74,33 @@ An AI-powered tool that investigates AWS cloud costs automatically. It scans res
 ## Request Flow
 
 ```
-①  User ─·─·─► React ─·─·─► FastAPI Auth ─·─·─► JWT (AWS PostgreSQL)
+①  User ─·─·─► React ─·─·─► FastAPI Auth ─·─·─► JWT (Amazon RDS PostgreSQL)
 
-②  User selects Resource Group ─·─·─► Python Backend
+②  User selects AWS Resource Group ─·─·─► Python Backend
 
-③  Python ─·─·─► AWS CLI ─·─·─► Fetches all resources in RG
+③  Python ─·─·─► AWS CLI ─·─·─► Fetches all resources in Resource Group
 
 ④  Python ─·─·─► FastAPI WebSocket ─·─·─► React (live progress)
 
 ⑤  Python ─·─·─► OpenAI API ─·─·─► Cost analysis
 
-⑥  Python ─·─·─► AWS PostgreSQL ─·─·─► Stores analysis history
+⑥  Python ─·─·─► Amazon RDS PostgreSQL ─·─·─► Stores analysis history
 
-⑦  React ◄·─·─·─ Final report with suggestions & fixes
+⑦  React ◄·─·─·─ Final report with suggestions & AWS CLI fixes
 ```
 
 ## What It Detects
 
-- **Over-provisioned resources** — VMs, App Services, or databases sized larger than needed
-- **Unused resources** — Orphaned disks, unattached public IPs, idle load balancers
-- **Misconfigurations** — Wrong pricing tiers, missing auto-shutdown, no reserved instances
-- **Storage & logging costs** — Excessive log retention, no lifecycle policies on blob storage
+- **Over-provisioned resources** — EC2, RDS, or ElastiCache instances sized larger than needed
+- **Unused resources** — Unattached EBS volumes, unused Elastic IPs, idle ALB/NLB, stopped instances with attached storage
+- **Misconfigurations** — Wrong instance types/families, missing Savings Plans or Reserved Instances, no auto-scaling
+- **Storage & logging costs** — S3 buckets without lifecycle policies, excessive CloudWatch log retention
 
 ## Prerequisites
 
-- AWS CLI installed and logged in (`az login`)
-- An active AWS subscription with at least one resource group
-- An AWS Managed PostgreSQL instance
+- AWS CLI installed and configured (`aws configure` or valid IAM credentials)
+- An active AWS account with at least one AWS Resource Group
+- An Amazon RDS for PostgreSQL instance
 - An OpenAI API key
 - Python 3.10+
 - Node.js 18+
@@ -127,10 +126,10 @@ npm run dev
 
 ## How It Works
 
-1. User signs up / logs in via custom JWT auth (credentials stored in AWS PostgreSQL)
+1. User signs up / logs in via custom JWT auth (credentials stored in Amazon RDS PostgreSQL)
 2. Selects an AWS Resource Group to analyze
-3. Python backend fetches all resources using AWS CLI
+3. Python backend fetches all resources using AWS CLI (`aws resource-groups list-group-resources`)
 4. Live progress is streamed to the UI via FastAPI WebSocket
 5. Resource data is sent to OpenAI API for cost analysis
-6. Analysis results are stored in AWS PostgreSQL
-7. Final report with cost breakdown, suggestions, and fix commands is displayed
+6. Analysis results are stored in Amazon RDS PostgreSQL
+7. Final report with cost breakdown, suggestions, and AWS CLI fix commands is displayed

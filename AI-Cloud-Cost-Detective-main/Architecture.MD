@@ -23,23 +23,22 @@
                 :                      :                  :
                 ▼                      ▼                  ▼
          ┌─────────────┐     ┌──────────────┐    ┌──────────────┐
-         │  AWS CLI  │     │   FASTAPI    │    │   OPENAI     │
+         │  AWS CLI    │     │   FASTAPI    │    │   OPENAI     │
          │             │     │  WEBSOCKET   │    │    API       │
-         │ az resource │     │  (Progress)  │    │              │
-         │ list --rg   │     └──────┬───────┘    │ Cost Analysis│
+         │ resource-   │     │  (Progress)  │    │              │
+         │ groups list │     └──────┬───────┘    │ Cost Analysis│
          └──────┬──────┘            :            └──────┬───────┘
                 :                   : Live updates      :
                 ▼                   ▼                   :
          ┌─────────────┐   ┌───────────────┐            :
-         │   AWS     │   │    REACT      │            :
+         │    AWS      │   │    REACT      │            :
          │ (Resource   │   │  (Progress    │            :
          │   Group)    │   │   Tracker)    │            :
          └─────────────┘   └───────────────┘            :
                                                         ▼
                                                  ┌──────────────┐
-                                                 │    AWS     │
-                                                 │  POSTGRESQL  │
-                                                 │  (Managed)   │
+                                                 │  Amazon RDS  │
+                                                 │ (PostgreSQL) │
                                                  │              │
                                                  │ · users      │
                                                  │ · analyses   │

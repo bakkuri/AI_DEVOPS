@@ -1,13 +1,13 @@
-# Prompt 3: AWS PostgreSQL + WebSocket Progress Tracking
+# Prompt 3: AWS RDS PostgreSQL + WebSocket Progress Tracking
 
-Build on top of the existing FastAPI backend. Add AWS Managed PostgreSQL for storing users and analysis history, and FastAPI WebSocket for live progress updates.
+Build on top of the existing FastAPI backend. Add Amazon RDS for PostgreSQL for storing users and analysis history, and FastAPI WebSocket for live progress updates.
 
 ## What to build
 
-### Database (AWS Managed PostgreSQL)
+### Database (Amazon RDS for PostgreSQL)
 
-- Connect to an AWS Managed PostgreSQL instance using `asyncpg` or `psycopg2`.
-- Store the database connection string in `.env` (`DATABASE_URL`).
+- Connect to an Amazon RDS for PostgreSQL instance using `asyncpg` or `psycopg2`.
+- Store the database connection string in `.env` (`DATABASE_URL`), e.g. `postgresql://user:password@your-rds-endpoint.region.rds.amazonaws.com:5432/dbname`.
 - Create two tables on startup:
   - `users` — id, email, password_hash, created_at
   - `analyses` — id, user_id, resource_group, resources_scanned (int), issues_found (int), estimated_savings (text), analysis_result (jsonb), status, created_at
@@ -18,8 +18,8 @@ Build on top of the existing FastAPI backend. Add AWS Managed PostgreSQL for sto
 
 - Add a WebSocket endpoint `ws://localhost:8000/ws/progress/{analysis_id}`.
 - During the `POST /api/analyze` flow, push progress messages through the WebSocket at each stage:
-  - `"Fetching resource groups..."`
-  - `"Scanning resources in <rg>..."`
+  - `"Listing AWS Resource Groups..."`
+  - `"Scanning AWS resources in <group>..."`
   - `"Analyzing costs with AI..."`
   - `"Storing results..."`
   - `"Analysis complete"`
@@ -34,7 +34,7 @@ Add `DATABASE_URL` to `.env.example`.
 ```
 backend/
 ├── main.py          (updated — history endpoint, WebSocket, DB init)
-├── aws_scanner.py (no change)
+├── aws_scanner.py   (no change)
 ├── ai_analyzer.py   (no change)
 ├── db.py            (new — DB connection, table creation, queries)
 ├── requirements.txt (updated — add asyncpg/psycopg2, websockets)
