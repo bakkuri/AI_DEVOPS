@@ -19,7 +19,7 @@ Create a Python FastAPI backend in a `backend/` folder for the AI Cloud Cost Det
 ```
 backend/
 ├── main.py
-├── AWS_scanner.py
+├── aws_scanner.py
 ├── requirements.txt
 ```
 
