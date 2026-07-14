@@ -22,5 +22,5 @@ export function isAuthenticated(): boolean {
 
 export function logout(): void {
   removeToken();
-  window.location.href = '/login';
+  window.location.replace('/login');
 }

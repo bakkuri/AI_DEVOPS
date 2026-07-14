@@ -13,7 +13,7 @@ export const Dashboard: React.FC = () => {
   const [error, setError] = useState('');
   const [progressMessages, setProgressMessages] = useState<{ message: string; type: string; timestamp: string }[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisId, setAnalysisId] = useState<string>('');
+  const [analysisId, setAnalysisId] = useState('');
   const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
@@ -39,6 +39,19 @@ export const Dashboard: React.FC = () => {
     fetchGroups();
   }, [navigate]);
 
+  // Cleanup WebSocket on unmount
+  useEffect(() => {
+    return () => {
+      if (ws) {
+        try {
+          ws.close();
+        } catch (e) {
+          // ignore
+        }
+      }
+    };
+  }, [ws]);
+
   const handleAnalyze = async () => {
     if (!selectedGroup) {
       setError('Please select a resource group');
@@ -55,22 +68,47 @@ export const Dashboard: React.FC = () => {
       const response = await analyzeResourceGroup(selectedGroup);
       setAnalysisId(response.analysis_id);
 
-      // Connect to WebSocket for progress
+      // If the backend returned analysis immediately (e.g. OpenAI fallback),
+      // skip waiting for WebSocket progress and navigate to the report.
+      if (response.analysis) {
+        setIsAnalyzing(false);
+        navigate(`/report/${response.analysis_id}`, { state: response });
+        return;
+      }
+
+      // Connect to WebSocket for progress (only when analysis runs asynchronously)
       const newWs = connectToProgress(
         response.analysis_id,
         (msg) => {
           setProgressMessages((prev) => [...prev, msg]);
+          if (msg.type === 'completed') {
+            setIsAnalyzing(false);
+            try {
+              newWs.close();
+            } catch (e) {
+              // ignore
+            }
+            setTimeout(() => {
+              navigate(`/report/${response.analysis_id}`, { state: response });
+            }, 1000);
+          }
+          if (msg.type === 'error') {
+            setIsAnalyzing(false);
+            try {
+              newWs.close();
+            } catch (e) {
+              // ignore
+            }
+          }
         },
         (err) => {
           console.error('WebSocket error:', err);
           setError('Connection error during analysis');
+          setIsAnalyzing(false);
         },
         () => {
+          // cleanup when the socket closes
           setIsAnalyzing(false);
-          // Redirect to report after completion
-          setTimeout(() => {
-            navigate(`/report/${response.analysis_id}`, { state: response });
-          }, 1000);
         }
       );
 

@@ -1,0 +1,57 @@
+INFO:     Will watch for changes in these directories: ['/Users/sourapu/Desktop/vs_aws_cost/AI_DEVOPS/AI-Cloud-Cost-Detective-main/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [49868] using StatReload
+INFO:     Started server process [49870]
+INFO:     Waiting for application startup.
+2026-07-15 02:41:19,881 - db - INFO - Connecting to PostgreSQL database...
+2026-07-15 02:41:19,902 - db - INFO - Database connection pool created successfully
+2026-07-15 02:41:19,903 - db - INFO - Database schema initialized successfully
+2026-07-15 02:41:19,904 - main - INFO - Application startup complete
+INFO:     Application startup complete.
+2026-07-15 02:41:22,506 - main - INFO - Starting analysis 642488df-b10d-450c-9c76-72876707a6c4 for resource group: cost-opt (user: 1)
+2026-07-15 02:41:22,512 - db - INFO - Created analysis record: ID=43
+2026-07-15 02:41:22,512 - main - INFO - Created analysis record in DB: 43
+2026-07-15 02:41:26,992 - aws_scanner - INFO - Found 2 resources in group 'cost-opt'
+2026-07-15 02:41:26,992 - main - INFO - Starting AI cost analysis
+2026-07-15 02:41:26,992 - ai_analyzer - INFO - Calling OpenAI API for cost analysis of 2 resources
+2026-07-15 02:41:27,392 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-07-15 02:41:27,393 - ai_analyzer - WARNING - OpenAI unavailable: OpenAI quota exceeded or rate-limited: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.. Returning fallback analysis.
+2026-07-15 02:41:27,393 - main - INFO - Cost analysis complete: 0 issues found
+2026-07-15 02:41:27,395 - db - INFO - Updated analysis record: ID=43, status=completed
+2026-07-15 02:41:27,395 - main - INFO - Stored analysis results in DB: 43
+INFO:     127.0.0.1:54790 - "POST /api/analyze HTTP/1.1" 200 OK
+2026-07-15 02:42:35,149 - aws_scanner - INFO - Found 1 resource groups: ['cost-opt']
+INFO:     127.0.0.1:54862 - "GET /api/resource-groups HTTP/1.1" 200 OK
+2026-07-15 02:42:36,723 - aws_scanner - INFO - Found 1 resource groups: ['cost-opt']
+INFO:     127.0.0.1:54862 - "GET /api/resource-groups HTTP/1.1" 200 OK
+2026-07-15 02:42:37,516 - main - INFO - Starting analysis fe3e3122-8796-46ed-8572-7728fac04563 for resource group: cost-opt (user: 2)
+2026-07-15 02:42:37,529 - db - INFO - Created analysis record: ID=44
+2026-07-15 02:42:37,535 - main - INFO - Created analysis record in DB: 44
+2026-07-15 02:42:41,765 - aws_scanner - INFO - Found 2 resources in group 'cost-opt'
+2026-07-15 02:42:41,765 - main - INFO - Starting AI cost analysis
+2026-07-15 02:42:41,765 - ai_analyzer - INFO - Calling OpenAI API for cost analysis of 2 resources
+2026-07-15 02:42:42,302 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-07-15 02:42:42,302 - ai_analyzer - WARNING - OpenAI unavailable: OpenAI quota exceeded or rate-limited: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.. Returning fallback analysis.
+2026-07-15 02:42:42,302 - main - INFO - Cost analysis complete: 0 issues found
+2026-07-15 02:42:42,307 - db - INFO - Updated analysis record: ID=44, status=completed
+2026-07-15 02:42:42,307 - main - INFO - Stored analysis results in DB: 44
+INFO:     127.0.0.1:54862 - "POST /api/analyze HTTP/1.1" 200 OK
+INFO:     ('127.0.0.1', 54877) - "WebSocket /ws/progress/fe3e3122-8796-46ed-8572-7728fac04563" [accepted]
+2026-07-15 02:42:42,320 - main - INFO - WebSocket connected for analysis fe3e3122-8796-46ed-8572-7728fac04563
+INFO:     connection open
+2026-07-15 02:42:49,883 - main - INFO - Fetching analysis history for user 2
+INFO:     127.0.0.1:54886 - "GET /api/history HTTP/1.1" 200 OK
+2026-07-15 02:42:49,892 - main - INFO - Fetching analysis history for user 2
+INFO:     127.0.0.1:54886 - "GET /api/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54886 - "OPTIONS /api/analysis/44 HTTP/1.1" 200 OK
+2026-07-15 02:42:54,731 - main - INFO - Fetching analysis details for DB ID 44 (user: 2)
+INFO:     127.0.0.1:54888 - "GET /api/analysis/44 HTTP/1.1" 200 OK
+2026-07-15 02:48:12,941 - main - INFO - WebSocket disconnected for analysis fe3e3122-8796-46ed-8572-7728fac04563
+INFO:     connection closed
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-07-15 02:48:58,854 - db - INFO - Database connection pool closed
+2026-07-15 02:48:58,855 - main - INFO - Application shutdown complete
+INFO:     Application shutdown complete.
+INFO:     Finished server process [49870]
+INFO:     Stopping reloader process [49868]

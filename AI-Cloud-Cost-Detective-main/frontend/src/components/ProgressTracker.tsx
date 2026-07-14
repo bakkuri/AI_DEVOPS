@@ -1,5 +1,4 @@
 import React from 'react';
-import { ReactNode } from 'react';
 
 interface ProgressTrackerProps {
   messages: { message: string; type: string; timestamp: string }[];

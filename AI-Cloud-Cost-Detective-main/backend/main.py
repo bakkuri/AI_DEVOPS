@@ -11,6 +11,7 @@ Steps of the request flow:
 """
 
 import logging
+import asyncio
 import uuid
 import json
 from typing import List, Dict, Any, Optional, Set
@@ -712,6 +713,22 @@ async def analyze_resource_group(
                 logger.info(f"Created analysis record in DB: {db_analysis_id}")
             except Exception as e:
                 logger.warning(f"Failed to create analysis record: {str(e)}")
+
+        # Give the client a short window to connect to the WebSocket so it doesn't miss final broadcasts.
+        # If no client connects within the timeout, proceed anyway.
+        try:
+            wait_seconds = 3
+            interval = 0.1
+            waited = 0.0
+            while waited < wait_seconds:
+                if analysis_id in manager.active_connections:
+                    logger.info(f"Client connected for analysis {analysis_id} after {waited:.1f}s")
+                    break
+                await asyncio.sleep(interval)
+                waited += interval
+        except Exception:
+            # Non-fatal if asyncio sleep or check fails
+            pass
         
         # Step ③: Fetch AWS resources with progress tracking
         await manager.broadcast(analysis_id, "Listing AWS Resource Groups...")
@@ -767,13 +784,20 @@ async def analyze_resource_group(
             logger.info(f"Cost analysis complete: {len(analysis.issues)} issues found")
         
         except OpenAIConfigError as e:
-            logger.warning(f"OpenAI not configured: {str(e)}. Continuing without AI analysis.")
-            # Continue without analysis - it's okay if OpenAI is not configured
+            logger.error(f"OpenAI not configured: {str(e)}")
+            await manager.broadcast(analysis_id, f"AI analysis failed: OpenAI API key is not configured.", status="error")
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "error": "OpenAI API key is not configured. Set OPENAI_API_KEY in your environment.",
+                    "code": "OPENAI_API_CONFIG_ERROR"
+                }
+            )
         except OpenAIAPIError as e:
             logger.error(f"OpenAI API error: {str(e)}")
             await manager.broadcast(analysis_id, f"AI analysis failed: {str(e)}", status="error")
             raise HTTPException(
-                status_code=500,
+                status_code=502,
                 detail={
                     "error": str(e),
                     "code": "OPENAI_API_ERROR"
@@ -803,6 +827,17 @@ async def analyze_resource_group(
                     "analysis_id": analysis_id,
                     "summary": analysis_response.summary if analysis_response else "",
                     "total_estimated_savings": total_savings,
+                    "resources": [
+                        {
+                            "resource_type": r.resource_type,
+                            "name": r.name,
+                            "region": r.region,
+                            "sku": r.sku,
+                            "tags": r.tags,
+                            "arn": r.arn
+                        }
+                        for r in resource_responses
+                    ],
                     "issues": [
                         {
                             "title": issue.title,
@@ -1052,6 +1087,12 @@ async def get_analysis_details(
         
         analysis_dict = dict(analysis)
         analysis_result = analysis_dict.get('analysis_result') or {}
+        if isinstance(analysis_result, str):
+            try:
+                analysis_result = json.loads(analysis_result)
+            except json.JSONDecodeError:
+                logger.warning("Analysis result is stored as invalid JSON string; treating as empty result")
+                analysis_result = {}
         
         # Reconstruct AnalyzeResponse
         resources = [
@@ -1064,7 +1105,7 @@ async def get_analysis_details(
                 arn=r.get('arn', '')
             )
             for r in analysis_result.get('resources', [])
-        ] if 'resources' in analysis_result else []
+        ] if isinstance(analysis_result, dict) and 'resources' in analysis_result else []
         
         # Build cost analysis response
         analysis_response = None

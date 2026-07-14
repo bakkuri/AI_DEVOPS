@@ -1,11 +1,13 @@
 import React from 'react';
-import { logout } from '../auth';
+import { logout, isAuthenticated } from '../auth';
 
 interface NavbarProps {
   userEmail?: string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ userEmail }) => {
+  const loggedIn = isAuthenticated();
+
   return (
     <nav className="bg-gray-800 border-b border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -23,9 +25,9 @@ export const Navbar: React.FC<NavbarProps> = ({ userEmail }) => {
           <a href="/history" className="text-gray-300 hover:text-white transition">
             History
           </a>
-          {userEmail && (
+          {loggedIn && (
             <>
-              <span className="text-gray-400 text-sm">{userEmail}</span>
+              {userEmail && <span className="text-gray-400 text-sm">{userEmail}</span>}
               <button
                 onClick={logout}
                 className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition text-sm font-medium"

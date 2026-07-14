@@ -165,8 +165,19 @@ export async function analyzeResourceGroup(resourceGroup: string): Promise<Analy
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail?.error || 'Analysis failed');
+    // Try to surface backend structured error (detail.error) when available
+    let errMsg = 'Analysis failed';
+    try {
+      const errorBody = await response.json();
+      errMsg = errorBody?.detail?.error || errorBody?.error || JSON.stringify(errorBody);
+    } catch (e) {
+      try {
+        errMsg = await response.text();
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    throw new Error(errMsg || 'Analysis failed');
   }
 
   return response.json();

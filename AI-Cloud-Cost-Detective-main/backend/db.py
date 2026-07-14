@@ -288,9 +288,14 @@ class PostgresDatabase:
             )
             if record:
                 result = dict(record)
-                # Parse JSONB
-                if result.get('analysis_result'):
-                    result['analysis_result'] = json.loads(result['analysis_result'])
+                # Parse JSONB if stored as string
+                analysis_result = result.get('analysis_result')
+                if isinstance(analysis_result, str):
+                    try:
+                        result['analysis_result'] = json.loads(analysis_result)
+                    except json.JSONDecodeError:
+                        logger.warning("Analysis result is stored as invalid JSON string; treating as empty result")
+                        result['analysis_result'] = {}
                 return result
             return None
     

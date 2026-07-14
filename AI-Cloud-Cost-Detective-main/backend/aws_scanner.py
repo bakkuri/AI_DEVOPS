@@ -153,9 +153,14 @@ class AWSScanner:
             ])
             
             group_identifiers = response.get('GroupIdentifiers', [])
-            group_names = [group['Name'] for group in group_identifiers if 'Name' in group]
+            group_names = []
+            for group in group_identifiers:
+                # Try 'GroupName' first (in GroupIdentifiers), then 'Name' (in Groups)
+                name = group.get('GroupName') or group.get('Name')
+                if name:
+                    group_names.append(name)
             
-            logger.info(f"Found {len(group_names)} resource groups")
+            logger.info(f"Found {len(group_names)} resource groups: {group_names}")
             return group_names
             
         except AWSError:
@@ -176,10 +181,16 @@ class AWSScanner:
         parts = arn.split(':')
         region = parts[3] if len(parts) > 3 else 'unknown'
         service = parts[2] if len(parts) > 2 else 'unknown'
+
+        # Some services (IAM) are global and do not have a region
+        if service.lower() == 'iam':
+            region = 'global'
         
         # Extract resource type from the last part
         resource_part = parts[-1] if parts else ''
         resource_type = resource_part.split('/')[0] if '/' in resource_part else resource_part
+        if not resource_type:
+            resource_type = 'UNKNOWN'
         
         return region, f"AWS::{service.upper()}::{resource_type}"
     
@@ -230,30 +241,51 @@ class AWSScanner:
                 logger.info(f"No resources found in group '{group_name}'")
                 return []
             
-            # Extract ARNs for tagging API call
-            arns = [rid.get('ResourceARN') for rid in resource_identifiers if 'ResourceARN' in rid]
-            
+            # Normalize ARNs and fields for tagging API call
+            arns = []
+            resources = []
+
+            for rid in resource_identifiers:
+                # Support different AWS CLI key casing/variants
+                arn = rid.get('ResourceARN') or rid.get('ResourceArn') or rid.get('ARN') or rid.get('Arn') or ''
+                if arn:
+                    arns.append(arn)
+
             # Fetch tags for all resources
             tags_map = AWSScanner._get_resource_tags(arns) if arns else {}
-            
-            # Build resource list
-            resources = []
+
+            # Build resource list with robust field extraction
             for rid in resource_identifiers:
-                arn = rid.get('ResourceARN', '')
-                resource_type = rid.get('ResourceType', '')
-                
-                region, parsed_type = AWSScanner._parse_resource_arn(arn)
-                name = rid.get('Name') or AWSScanner._get_resource_name_from_arn(arn)
-                sku = AWSScanner._extract_sku(resource_type, arn)
-                tags = tags_map.get(arn, {})
-                
+                arn = rid.get('ResourceARN') or rid.get('ResourceArn') or rid.get('ARN') or rid.get('Arn') or ''
+
+                # Resource type may be provided or derivable from ARN
+                raw_type = rid.get('ResourceType') or rid.get('Type') or ''
+                if not raw_type and arn:
+                    # Try to derive from ARN last segment
+                    _, derived = AWSScanner._parse_resource_arn(arn)
+                    # derived is like 'AWS::SERVICE::resource'
+                    raw_type = derived
+
+                # Parse region and normalized resource type
+                region, parsed_type = AWSScanner._parse_resource_arn(arn) if arn else ('unknown', f"AWS::UNKNOWN::{raw_type or ''}")
+
+                # Name fields may vary
+                name = rid.get('Name') or rid.get('ResourceName') or rid.get('Id') or rid.get('ResourceId') or ''
+                if not name and arn:
+                    name = AWSScanner._get_resource_name_from_arn(arn)
+
+                # SKU/size
+                sku = AWSScanner._extract_sku(raw_type or parsed_type, arn)
+
+                tags = tags_map.get(arn, {}) if arn else {}
+
                 resource = Resource(
                     resource_type=parsed_type,
-                    name=name,
-                    region=region,
-                    sku=sku,
+                    name=name or '',
+                    region=region or 'unknown',
+                    sku=sku or 'unknown',
                     tags=tags,
-                    arn=arn
+                    arn=arn or ''
                 )
                 resources.append(resource)
             
@@ -301,16 +333,71 @@ class AWSScanner:
     def _extract_sku(resource_type: str, arn: str) -> str:
         """
         Extract SKU/size information for the resource.
-        
-        For now, returns a placeholder. Can be extended to call describe-* APIs.
-        
+
+        This uses AWS CLI describe calls for common compute and database resources
+        to give the AI more explicit sizing and state detail.
+
         Args:
             resource_type: AWS resource type
             arn: AWS ARN of the resource
-            
+
         Returns:
             SKU or size information
         """
-        # Placeholder - can be extended to call describe-* APIs for specific resource types
-        # e.g., for EC2: describe-instances, for RDS: describe-db-instances
-        return "standard"  # Default SKU
+        if not arn:
+            return "unknown"
+
+        try:
+            if arn.startswith("arn:aws:ec2:"):
+                instance_id = arn.split('/')[-1]
+                if instance_id.startswith("i-"):
+                    response = AWSScanner._run_aws_command([
+                        'aws', 'ec2', 'describe-instances',
+                        '--instance-ids', instance_id,
+                        '--query', 'Reservations[0].Instances[0].{Type:InstanceType,State:State.Name,AZ:Placement.AvailabilityZone}',
+                        '--output', 'json'
+                    ])
+                    if isinstance(response, dict):
+                        instance_type = response.get('Type')
+                        state = response.get('State')
+                        az = response.get('AZ')
+                        details = [value for value in [instance_type, state, az] if value]
+                        return ' '.join(details) if details else 'ec2-instance'
+
+            if 'rds' in resource_type.lower() or ':rds:' in arn:
+                resource_id = arn.split(':')[-1].replace('db:', '')
+                if resource_id:
+                    response = AWSScanner._run_aws_command([
+                        'aws', 'rds', 'describe-db-instances',
+                        '--db-instance-identifier', resource_id,
+                        '--query', 'DBInstances[0].{Class:DBInstanceClass,Status:DBInstanceStatus,MultiAZ:MultiAZ}',
+                        '--output', 'json'
+                    ])
+                    if isinstance(response, dict):
+                        db_class = response.get('Class')
+                        status = response.get('Status')
+                        multi_az = response.get('MultiAZ')
+                        details = [str(value) for value in [db_class, status, f"MultiAZ={multi_az}" if multi_az is not None else None] if value]
+                        return ' '.join(details) if details else 'rds-instance'
+
+            if 'elasticache' in resource_type.lower() or ':elasticache:' in arn:
+                cache_id = arn.split(':')[-1]
+                response = AWSScanner._run_aws_command([
+                    'aws', 'elasticache', 'describe-cache-clusters',
+                    '--cache-cluster-id', cache_id,
+                    '--query', 'CacheClusters[0].{NodeType:CacheNodeType,Engine:Engine,Status:CacheClusterStatus}',
+                    '--output', 'json'
+                ])
+                if isinstance(response, dict):
+                    node_type = response.get('NodeType')
+                    engine = response.get('Engine')
+                    status = response.get('Status')
+                    details = [value for value in [node_type, engine, status] if value]
+                    return ' '.join(details) if details else 'elasticache-cluster'
+
+        except AWSError as e:
+            logger.warning(f"Failed to fetch SKU details for {arn}: {str(e)}. Falling back to unknown.")
+        except Exception as e:
+            logger.warning(f"Unexpected SKU extraction error for {arn}: {str(e)}")
+
+        return "unknown"
